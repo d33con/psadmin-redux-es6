@@ -1,6 +1,7 @@
 // holds course action creators
 import * as types from './actionTypes';
 import courseApi from '../api/mockCourseApi';
+import {beginAjaxCall, ajaxCallError} from './ajaxStatusActions';
 
 // course is the same as course: course
 // shorthand property name
@@ -19,6 +20,8 @@ export function createCourseSuccess(course) {
 // thunks
 export function loadCourses() {
   return function(dispatch) {
+    // dispatch ajax call state updater
+    dispatch(beginAjaxCall());
     // api call goes here
     return courseApi.getAllCourses().then(courses => {
       // dispatch action creator
@@ -31,12 +34,15 @@ export function loadCourses() {
 
 export function saveCourse(course) {
   return function(dispatch) {
-    return courseApi.saveCourse(course).then(savedCourse => {
+    // dispatch ajax call state updater
+    dispatch(beginAjaxCall());
+    return courseApi.saveCourse(course).then(course => {
       // if course.id update
-      course.id ? dispatch(updateCourseSuccess(savedCourse)) :
+      course.id ? dispatch(updateCourseSuccess(course)) :
       // else create new course
-      dispatch(createCourseSuccess(savedCourse));
+      dispatch(createCourseSuccess(course));
     }).catch(error => {
+      dispatch(ajaxCallError(error));
       throw (error);
     });
   };

@@ -3,6 +3,7 @@ import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import * as courseActions from '../../actions/courseActions';
 import CourseForm from './CourseForm';
+import toastr from 'toastr';
 
 class ManageCoursePage extends React.Component {
   // initialize state
@@ -11,7 +12,8 @@ class ManageCoursePage extends React.Component {
 
       this.state = {
         course: Object.assign({}, this.props.course),
-        errors: {}
+        errors: {},
+        saving: false
       };
 
       // bind component methods
@@ -38,8 +40,19 @@ class ManageCoursePage extends React.Component {
 
   saveCourse(event) {
     event.preventDefault();
-    this.props.actions.saveCourse(this.state.course);
-    // redirect after saving using context
+    this.setState({ saving: true });
+    this.props.actions.saveCourse(this.state.course)
+      .then(() => this.redirect())
+      .catch(error => { // handle errors
+        toastr.error(error);
+        this.setState({ saving: false });
+      });
+  }
+
+  // redirect after saving using context
+  redirect() {
+    this.setState({ saving: false });
+    toastr.success('Course saved');
     this.context.router.push('/courses');
   }
 
@@ -50,7 +63,8 @@ class ManageCoursePage extends React.Component {
           course={this.state.course}
           errors={this.state.errors}
           onChange={this.updateCourseState}
-          onSave={this.saveCourse} />
+          onSave={this.saveCourse}
+          saving={this.state.saving} />
     );
   }
 }
@@ -80,6 +94,7 @@ function getCourseById(courses, id) {
 // get the state from the rootReducer store
 // it can be then be accessed as props by the component
 function mapStateToProps(state, ownProps) {
+
   // get course id from path '/course/:id' coming from routes.js
   const courseId = ownProps.params.id;
 
